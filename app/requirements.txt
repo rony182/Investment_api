@@ -1,0 +1,7 @@
+fastapi
+uvicorn
+huggingface_hub==0.22.2
+pinecone-client
+python-dotenv
+FlagEmbedding
+peft
