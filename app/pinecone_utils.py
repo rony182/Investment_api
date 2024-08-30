@@ -1,11 +1,12 @@
-# pinecone_utils.py
-
 import os
 from dotenv import load_dotenv
 from pinecone import Pinecone
-from FlagEmbedding import FlagModel
+import openai
+from sklearn.decomposition import PCA
+import numpy as np  # Import NumPy
+import logging
 
-# Load environment variables from the .env file
+# Load environment variables from .env file
 load_dotenv()
 
 # Initialize Pinecone client
@@ -18,15 +19,30 @@ pc = Pinecone(api_key=api_key)
 index_name = "investments"
 index = pc.Index(index_name)
 
-# Initialize the embedding model using FlagEmbedding
-model = FlagModel('BAAI/bge-small-en-v1.5', use_fp16=True)
+# Initialize OpenAI client
+openai.api_key = os.getenv("OPENAI_API_KEY")
+
+# Initialize PCA for dimensionality reduction
+pca = PCA(n_components=384)
 
 def generate_embedding(query_text):
     try:
-        query_embedding = model.encode([query_text])
-        return query_embedding.tolist() if hasattr(query_embedding, 'tolist') else query_embedding
+        response = openai.Embedding.create(
+            input=query_text,
+            model="text-embedding-ada-002"  # Produces 1536-dimensional embeddings
+        )
+        # Extract the embedding vector from the response
+        query_embedding = response['data'][0]['embedding']
+        
+        # Convert to numpy array for PCA
+        query_embedding = np.array(query_embedding).reshape(1, -1)
+        
+        # Apply PCA to reduce to 384 dimensions
+        reduced_embedding = pca.transform(query_embedding)
+        
+        return reduced_embedding.flatten().tolist()
     except Exception as e:
-        print(f"Error generating embedding: {e}")
+        logging.error(f"Error generating embedding with OpenAI: {e}")
         return None
 
 def query_pinecone(query_embedding):
@@ -37,9 +53,9 @@ def query_pinecone(query_embedding):
             include_metadata=True
         )
         if not response or 'matches' not in response or len(response['matches']) == 0:
-            print("No matches found in Pinecone.")
+            logging.warning("No matches found in Pinecone.")
             return None
         return response
     except Exception as e:
-        print(f"Error querying Pinecone: {e}")
+        logging.error(f"Error querying Pinecone: {e}")
         return None

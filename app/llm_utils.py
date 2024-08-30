@@ -1,9 +1,13 @@
-# llm_utils.py
+import openai
+import os
+from dotenv import load_dotenv
+import logging
 
-from huggingface_hub import InferenceClient
+# Load environment variables from .env file
+load_dotenv()
 
-# Initialize Hugging Face Inference Client
-hf_client = InferenceClient("HuggingFaceH4/zephyr-7b-beta")
+# Initialize OpenAI client
+openai.api_key = os.getenv("OPENAI_API_KEY")
 
 def query_llm(query, queried_data, max_tokens=300, temperature=0.5, top_p=0.95):
     try:
@@ -11,7 +15,7 @@ def query_llm(query, queried_data, max_tokens=300, temperature=0.5, top_p=0.95):
         context = "\n".join([match['metadata']['narrative_texts'] for match in queried_data['matches'] if 'narrative_texts' in match['metadata']])
         
         if not context:
-            print("No valid context found in Pinecone data.")
+            logging.warning("No valid context found in Pinecone data.")
             return "I'm sorry, I couldn't find enough context to answer your query."
 
         prompt = (
@@ -23,24 +27,17 @@ def query_llm(query, queried_data, max_tokens=300, temperature=0.5, top_p=0.95):
             f"{query}\n\n"
             "Response:"
         )
-        
-        messages = [
-            {"role": "system", "content": "You are a finance and investment expert."},
-            {"role": "user", "content": prompt}
-        ]
-        
-        response = ""
-        for message in hf_client.chat_completion(
-            messages,
+        response = openai.ChatCompletion.create(
+            model="gpt-4o-mini",  # Or any other OpenAI model you wish to use
+            messages=[
+                {"role": "system", "content": "You are a finance and investment expert."},
+                {"role": "user", "content": prompt}
+            ],
             max_tokens=max_tokens,
-            stream=True,
             temperature=temperature,
             top_p=top_p
-        ):
-            token = message.choices[0].delta.content
-            response += token
-
-        return response.strip()
+        )
+        return response.choices[0].message['content'].strip()
     except Exception as e:
-        print(f"Error querying LLM: {e}")
+        logging.error(f"Error querying LLM: {e}")
         return "There was an error processing your request. Please try again later."
