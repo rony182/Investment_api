@@ -1,7 +1,7 @@
 from fastapi import FastAPI, HTTPException
 from pydantic import BaseModel
-from llm_utils import query_llm
-from pinecone_utils import generate_embedding, query_pinecone
+from .llm_utils import query_llm
+from .pinecone_utils import generate_embedding, query_pinecone
 
 app = FastAPI()
 
