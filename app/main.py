@@ -1,9 +1,27 @@
+import os
 from fastapi import FastAPI, HTTPException
+from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 from .llm_utils import query_llm
 from .pinecone_utils import generate_embedding, query_pinecone
+from dotenv import load_dotenv
+
+# Load environment variables from .env file
+load_dotenv()
 
 app = FastAPI()
+
+# Determine the origin allowed based on environment
+environment = os.getenv("ENVIRONMENT", "local")
+frontend_url = os.getenv("FRONTEND_URL", "http://localhost:3000")
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=[frontend_url],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 
 class QueryRequest(BaseModel):
     query: str
