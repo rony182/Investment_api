@@ -3,7 +3,7 @@ from dotenv import load_dotenv
 from pinecone import Pinecone
 import openai
 from sklearn.decomposition import PCA
-import numpy as np  # Import NumPy
+import numpy as np
 import logging
 
 # Load environment variables from .env file
@@ -28,14 +28,14 @@ pca = PCA(n_components=384)
 def generate_embedding(query_text):
     try:
         logging.info("Generating embedding for query: %s", query_text)
-        response = openai.embeddings_utils.get_embedding(
+        response = openai.Embedding.create(
             input=query_text,
             model="text-embedding-ada-002"  # Produces 1536-dimensional embeddings
         )
         logging.info("Received response from OpenAI")
 
         # Extract the embedding vector from the response
-        query_embedding = response
+        query_embedding = response['data'][0]['embedding']
 
         # Convert to numpy array for PCA
         query_embedding = np.array(query_embedding).reshape(1, -1)
