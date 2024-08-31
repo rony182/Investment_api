@@ -5,6 +5,7 @@ from pydantic import BaseModel
 from .llm_utils import query_llm
 from .pinecone_utils import generate_embedding, query_pinecone
 from dotenv import load_dotenv
+import logging
 
 # Load environment variables from .env file
 load_dotenv()

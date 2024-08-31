@@ -27,19 +27,24 @@ pca = PCA(n_components=384)
 
 def generate_embedding(query_text):
     try:
+        logging.info("Generating embedding for query: %s", query_text)
         response = openai.Embedding.create(
             input=query_text,
             model="text-embedding-ada-002"  # Produces 1536-dimensional embeddings
         )
+        logging.info("Received response from OpenAI")
+
         # Extract the embedding vector from the response
         query_embedding = response['data'][0]['embedding']
         
         # Convert to numpy array for PCA
         query_embedding = np.array(query_embedding).reshape(1, -1)
-        
+        logging.info("Converted embedding to numpy array")
+
         # Apply PCA to reduce to 384 dimensions
         reduced_embedding = pca.transform(query_embedding)
-        
+        logging.info("Applied PCA to reduce dimensions")
+
         return reduced_embedding.flatten().tolist()
     except Exception as e:
         logging.error(f"Error generating embedding with OpenAI: {e}")
