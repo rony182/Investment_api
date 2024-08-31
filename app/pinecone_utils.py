@@ -24,13 +24,22 @@ client = OpenAI(
     api_key=os.getenv("OPENAI_API_KEY")
 )
 
-# Generate some sample data for PCA fitting
-# Ideally, you should replace this with a representative sample of the data you'll be embedding
-sample_data = np.random.randn(100, 1536)  # 100 random 1536-dimensional vectors
+# Generate a representative sample of OpenAI embeddings
+# Replace these with actual sample queries that are typical for your use case
+sample_queries = ["What is AI?", "Explain blockchain", "How does the stock market work?", "What are quantum computers?", "History of machine learning"]
+sample_embeddings = []
 
-# Initialize and fit PCA for dimensionality reduction
+for query in sample_queries:
+    response = client.embeddings.create(input=query, model="text-embedding-ada-002")
+    embedding = response.data[0].embedding
+    sample_embeddings.append(embedding)
+
+# Convert sample embeddings to numpy array
+sample_embeddings = np.array(sample_embeddings)
+
+# Initialize and fit PCA for dimensionality reduction to 384 dimensions
 pca = PCA(n_components=384)
-pca.fit(sample_data)
+pca.fit(sample_embeddings)
 
 def generate_embedding(query_text):
     try:
