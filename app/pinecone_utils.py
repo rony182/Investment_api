@@ -1,7 +1,7 @@
 import os
 from dotenv import load_dotenv
 from pinecone import Pinecone
-import openai
+from openai import OpenAI
 from sklearn.decomposition import PCA
 import numpy as np
 import logging
@@ -20,7 +20,9 @@ index_name = "investments"
 index = pc.Index(index_name)
 
 # Initialize OpenAI client
-openai.api_key = os.getenv("OPENAI_API_KEY")
+client = OpenAI(
+    api_key=os.getenv("OPENAI_API_KEY")
+)
 
 # Initialize PCA for dimensionality reduction
 pca = PCA(n_components=384)
@@ -28,14 +30,14 @@ pca = PCA(n_components=384)
 def generate_embedding(query_text):
     try:
         logging.info("Generating embedding for query: %s", query_text)
-        response = openai.Embedding.create(
+        response = client.embeddings.create(
             input=query_text,
             model="text-embedding-ada-002"  # Produces 1536-dimensional embeddings
         )
         logging.info("Received response from OpenAI")
 
         # Extract the embedding vector from the response
-        query_embedding = response['data'][0]['embedding']
+        query_embedding = response.data[0].embedding
 
         # Convert to numpy array for PCA
         query_embedding = np.array(query_embedding).reshape(1, -1)
